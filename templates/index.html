@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TP N°1 : Prévision de la consommation électrique</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <h1>TP N°1 : Mise en œuvre d'un premier modèle de prévision</h1>
+  <p>Consommation électrique horaire d'un bâtiment : contrôle des données, régression linéaire, évaluation.</p>
+</header>
+
+<main>
+  <section class="carte">
+    <h2>Paramètres</h2>
+    <form method="post" enctype="multipart/form-data" class="formulaire">
+      <label>Fichier de données
+        <select name="fichier">
+          {% for f in fichiers %}
+          <option value="{{ f }}" {% if f == choix.fichier %}selected{% endif %}>{{ f }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>… ou téléverser un fichier (txt / csv)
+        <input type="file" name="televerse" accept=".csv,.txt">
+      </label>
+      <label>Correction des valeurs fausses
+        <select name="methode">
+          <option value="voisins" {% if choix.methode == 'voisins' %}selected{% endif %}>Valeurs voisines (interpolation)</option>
+          <option value="moyenne" {% if choix.methode == 'moyenne' %}selected{% endif %}>Moyenne de la même heure</option>
+        </select>
+      </label>
+      <label>Date de coupure (train / test)
+        <input type="date" name="date_coupure" value="{{ choix.date_coupure }}">
+      </label>
+      <button type="submit">Lancer le TP</button>
+    </form>
+  </section>
+
+  {% if erreur %}
+  <section class="carte erreur"><strong>Erreur :</strong> {{ erreur }}</section>
+  {% endif %}
+
+  {% if resultats %}
+  {% set r = resultats %}
+
+  <section class="carte">
+    <h2>Étape 1 : Chargement, contrôle et exploration des données</h2>
+    <h3>Aperçu des premières lignes</h3>
+    {{ r.apercu | safe }}
+
+    <h3>Contrôle qualité des données brutes</h3>
+    <table class="tableau">
+      {% for nom, valeur in r.audit.items() %}
+      <tr><th>{{ nom }}</th><td>{{ valeur }}</td></tr>
+      {% endfor %}
+    </table>
+
+    <h3>Corrections effectuées</h3>
+    {% if r.rapport|length == 0 %}
+    <p class="ok">Aucune valeur fausse détectée : aucune correction n'a été nécessaire.</p>
+    {% else %}
+    <p class="attention">{{ r.rapport|length }} correction(s) effectuée(s).</p>
+    {{ r.rapport_html | safe }}
+    <img src="data:image/png;base64,{{ r.images.corrections }}" alt="Données brutes et corrigées">
+    {% endif %}
+
+    <h3>Courbe de consommation</h3>
+    <img src="data:image/png;base64,{{ r.images.serie }}" alt="Courbe de consommation">
+    <img src="data:image/png;base64,{{ r.images.profils }}" alt="Cycles journalier et hebdomadaire">
+    <p class="reponse"><strong>Réponse :</strong> {{ r.reponses.cycles }}</p>
+  </section>
+
+  <section class="carte">
+    <h2>Étape 2 et 3 : Variables et séparation temporelle</h2>
+    <p>Variables créées : <code>heure</code>, <code>jour_semaine</code>, <code>est_weekend</code>, <code>temperature2</code>.</p>
+    <p>Entraînement : <strong>{{ r.train|length }}</strong> lignes ({{ r.train.date_heure.min() }} → {{ r.train.date_heure.max() }})<br>
+       Test : <strong>{{ r.test|length }}</strong> lignes ({{ r.test.date_heure.min() }} → {{ r.test.date_heure.max() }})</p>
+  </section>
+
+  <section class="carte">
+    <h2>Étape 4 : Régression linéaire</h2>
+    <p>Ordonnée à l'origine : {{ "%.3f"|format(r.intercept) }}</p>
+    {{ r.coef_html | safe }}
+    <p class="reponse"><strong>Réponse :</strong> {{ r.reponses.influence }}</p>
+  </section>
+
+  <section class="carte">
+    <h2>Étape 5 : Évaluation sur le jeu de test</h2>
+    <div class="metriques">
+      <div><span>MAE</span><strong>{{ "%.2f"|format(r.metriques.MAE) }} kW</strong></div>
+      <div><span>RMSE</span><strong>{{ "%.2f"|format(r.metriques.RMSE) }} kW</strong></div>
+      <div><span>MAPE</span><strong>{{ "%.2f"|format(r.metriques.MAPE) }} %</strong></div>
+    </div>
+    <p class="reponse">{{ r.reponses.metriques }}</p>
+    <p class="reponse"><strong>Que signifie un MAPE de 18 % ?</strong> {{ r.reponses.mape18 }}</p>
+    <p class="reponse"><strong>Pourquoi la RMSE est-elle supérieure à la MAE ?</strong> {{ r.reponses.rmse_mae }}</p>
+    <img src="data:image/png;base64,{{ r.images.h48 }}" alt="Réel et prédit sur 48 heures">
+  </section>
+
+  <section class="carte">
+    <h2>Étape 6 : Limites du modèle linéaire</h2>
+    <img src="data:image/png;base64,{{ r.images.residus }}" alt="Résidus">
+    <p class="reponse"><strong>Réponse :</strong> {{ r.reponses.residus }}</p>
+    <h3>Explications possibles</h3>
+    <ul>
+      <li><strong>Effet de seuil :</strong> le chauffage se déclenche sous une certaine température, ce qu'une droite représente mal.</li>
+      <li><strong>Relation non linéaire avec l'heure :</strong> la consommation a deux pics par jour, alors que le modèle utilise l'heure comme un nombre croissant.</li>
+      <li><strong>Interactions non capturées :</strong> l'effet de la température n'est pas le même la nuit, le jour ou le week-end.</li>
+      <li><strong>Variables manquantes :</strong> humidité, occupation, ensoleillement, jours fériés.</li>
+      <li><strong>Peu de données :</strong> quelques jours d'entraînement seulement.</li>
+    </ul>
+    <h3>Pistes d'amélioration</h3>
+    <ul>
+      <li>Ajouter des variables : consommation décalée (1 h, 24 h, 168 h), moyennes glissantes, heure encodée en sinus / cosinus, jours fériés.</li>
+      <li>Utiliser un modèle non linéaire : arbres, forêts aléatoires, gradient boosting (XGBoost).</li>
+      <li>Utiliser plus de données et une validation croisée temporelle (TimeSeriesSplit).</li>
+    </ul>
+  </section>
+  {% endif %}
+</main>
+
+<footer>TP N°1 Prévision &middot; Heni Moemen</footer>
+</body>
+</html>

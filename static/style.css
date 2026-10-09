@@ -1,0 +1,29 @@
+:root { --bleu: #1f4e79; --fond: #f4f6f9; --carte: #ffffff; --texte: #1f2933; --gris: #6b7280; --vert: #1b7f4b; --orange: #b45309; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Calibri, Arial, sans-serif; background: var(--fond); color: var(--texte); line-height: 1.55; }
+header { background: var(--bleu); color: #fff; padding: 28px 24px; text-align: center; }
+header h1 { margin: 0 0 6px; font-size: 1.6rem; }
+header p { margin: 0; opacity: .85; }
+main { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+.carte { background: var(--carte); border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.carte h2 { margin-top: 0; color: var(--bleu); border-bottom: 2px solid var(--bleu); padding-bottom: 6px; }
+.carte h3 { color: #2e75b6; margin-bottom: 6px; }
+.formulaire { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; align-items: end; }
+.formulaire label { display: flex; flex-direction: column; font-size: .9rem; color: var(--gris); gap: 4px; }
+.formulaire select, .formulaire input { padding: 8px; border: 1px solid #cbd2d9; border-radius: 6px; font-size: .95rem; }
+button { background: var(--bleu); color: #fff; border: 0; padding: 11px 18px; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+button:hover { background: #163a5c; }
+img { max-width: 100%; height: auto; display: block; margin: 12px auto; }
+.tableau { border-collapse: collapse; width: 100%; margin: 8px 0 12px; font-size: .88rem; display: block; overflow-x: auto; }
+.tableau th, .tableau td { border: 1px solid #d5dae0; padding: 6px 10px; text-align: left; }
+.tableau thead th, .tableau th { background: #e8eef5; }
+.reponse { background: #eef5fb; border-left: 4px solid var(--bleu); padding: 10px 14px; border-radius: 4px; }
+.ok { color: var(--vert); font-weight: 600; }
+.attention { color: var(--orange); font-weight: 600; }
+.erreur { border-left: 5px solid #c0392b; color: #7f1d1d; }
+.metriques { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+.metriques div { background: #e8eef5; border-radius: 8px; padding: 12px; text-align: center; }
+.metriques span { display: block; color: var(--gris); font-size: .85rem; }
+.metriques strong { font-size: 1.4rem; color: var(--bleu); }
+code { background: #eef0f3; padding: 1px 5px; border-radius: 4px; }
+footer { text-align: center; color: var(--gris); padding: 24px; font-size: .85rem; }
